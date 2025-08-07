@@ -9,11 +9,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (token) {
-      settoken({ token }); // In real apps, validate or decode token
+      settoken(token); // In real apps, validate or decode token
     }
   }, []);
 
-  const login = (data) => {
+  const login = async (data) => {
+    console.log("data", data);
     localStorage.setItem("authToken", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
     settoken(data.token);

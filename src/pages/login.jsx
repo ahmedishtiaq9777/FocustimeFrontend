@@ -12,10 +12,11 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("useEffect login", token);
     if (token) {
       navigate("/dashboard");
     }
-  }, []);
+  }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,8 +37,9 @@ const Login = () => {
 
       if (response.status == 200) {
         seterror("");
+        console.log("response:", response);
 
-        login(response.data);
+        await login(response.data);
         navigate("/dashboard");
       }
     } catch (err) {
