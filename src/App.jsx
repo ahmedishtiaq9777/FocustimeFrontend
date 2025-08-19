@@ -1,7 +1,7 @@
 import "./App.css";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
-import Dashboard from "./pages/dashboard";
+import Dashboard from "./pages/dashboard2";
 import { AuthProvider } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";

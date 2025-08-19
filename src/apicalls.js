@@ -22,6 +22,8 @@ export const tasksWithsearch = async (search = "") => {
 };
 export async function fetchTasks(page = 1, limit = 5) {
   try {
+    console.log("page:inside:", page);
+    console.log("limitinside:", limit);
     const response = await api.get("/tasks", {
       params: {
         page,
@@ -37,7 +39,11 @@ export async function fetchTasks(page = 1, limit = 5) {
   }
 }
 export const addTask = async (task) => {
-  const res = await api.post("/addtasks", task);
+  const res = await api.post("/addtask2", task, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return res.data;
 };
 
