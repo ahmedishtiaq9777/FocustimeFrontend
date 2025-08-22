@@ -1,6 +1,6 @@
 import Sidebar from "../components/sidebar";
 import MyTaskView from "../components/myTaskView";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -12,9 +12,10 @@ import {
   deleteTaskapi,
   fetchTasks,
   tasksWithsearch,
+  updateTask,
 } from "../apicalls";
 import DashboardView from "../components/myDashboardView";
-import AddTaskModal from "../components/addTaskmodel";
+import TaskModal from "../components/addTaskmodel";
 
 export default function Dashboard() {
   const [activeView, setActiveView] = useState("Dashboard");
@@ -23,12 +24,12 @@ export default function Dashboard() {
   const [nPages, settotalPages] = useState(1);
   const [pagArr, setpageArr] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [addTaskmodelvisble, setmodalvisible] = useState(false);
+
+  const [taskModalVisible, setModalVisible] = useState(false); // ⭐ renamed
+  const [taskToEdit, setTaskToEdit] = useState(null); // ⭐ new: store task being edited
 
   useEffect(() => {
     const loadTasks = async () => {
-      console.log("useEffect dashboard");
-      console.log("user::", user);
       await gettaskbypage();
     };
     loadTasks();
@@ -44,15 +45,9 @@ export default function Dashboard() {
       const arr = Array.from({ length: totalPages }, (_, i) => i + 1);
       setpageArr(arr);
 
-      console.log("tasks:length", tasks.length);
-      console.log("total pages:", totalPages);
       settotalPages(totalPages);
       setTasks(tasks);
       // setpage(currentPage);
-      console.log("tasks:", tasks);
-      console.log("totalTasks:", totalTasks);
-      console.log("currentpage:", currentPage);
-      console.log("totalPages", totalPages);
     } catch (error) {
       if (error.response) {
         if (error.response.status === 403) {
@@ -110,27 +105,54 @@ export default function Dashboard() {
     }
   };
   const addTaskSubmit = async (data) => {
-    console.log("form data:", data);
     try {
       const formData = new FormData();
       formData.append("title", data?.title);
-      formData.append("scheduled_for", data.scheduled_for);
+      formData.append("scheduled_for", data.scheduledFor);
       formData.append("priority", data.priority);
       formData.append("description", data.description);
       if (data.image) formData.append("image", data.image); // backend handles upload
-      formData.append("status", "Not Started");
+      formData.append("status", data.status);
 
-      const res = await addTask(formData);
-      console.log("res:", res);
+      if (taskToEdit) {
+        // ⭐ editing mode
+        await updateTask(data.id, formData); // assumes updateTask API exists
+        alert("Task updated successfully!");
+      } else {
+        await addTask(formData);
+        alert("Task created successfully!");
+      }
 
-      alert("Task created successfully!");
+      await gettaskbypage(); // refresh list
+      setModalVisible(false);
+      setTaskToEdit(null); // reset
     } catch (err) {
       console.error(err);
-      alert("Error creating task");
+
+      alert(taskToEdit ? "Error updating task" : "Error creating task");
     }
   };
+
+  const openAddTaskModal = () => {
+    setTaskToEdit(null); // ⭐ reset
+    setModalVisible(true);
+  };
+
+  const openEditTaskModal = (task) => {
+    console.log("task:", task);
+    // ⭐ new
+    setTaskToEdit(task);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    // ⭐ renamed
+    setModalVisible(false);
+    setTaskToEdit(null);
+  };
+
   const changemodelVisible = () => {
-    setmodalvisible((t) => !t);
+    setModalVisible((t) => !t);
   };
   const searchPress = async (search) => {
     let temptask = await tasksWithsearch(search);
@@ -149,7 +171,8 @@ export default function Dashboard() {
             pagArr={pagArr}
             nPages={nPages}
             setpage={Setpage_}
-            onaddclick={changemodelVisible}
+            onaddclick={openAddTaskModal} // ⭐ changed
+            oneditclick={openEditTaskModal} // ⭐ new
           />
         );
 
@@ -176,8 +199,12 @@ export default function Dashboard() {
           setActiveView={setActiveView}
           logout={logout}
         />
-        {addTaskmodelvisble && (
-          <AddTaskModal onSubmit={addTaskSubmit} onClose={changemodelVisible} />
+        {taskModalVisible && (
+          <TaskModal
+            onSubmit={addTaskSubmit}
+            onClose={changemodelVisible}
+            taskToEdit={taskToEdit}
+          />
         )}
         <div className="flex-1 ml-64">{renderView()}</div>
         {/*right side view*/}

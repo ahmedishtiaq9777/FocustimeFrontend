@@ -9,6 +9,7 @@ export const deleteTaskapi = async (taskId) => {
   const res = await api.delete(`/tasks/${taskId}`);
   return res.data;
 };
+
 export const tasksWithsearch = async (search = "") => {
   try {
     const response = await api.get("/tasksWithsearch", {
@@ -38,6 +39,21 @@ export async function fetchTasks(page = 1, limit = 5) {
     throw error;
   }
 }
+
+export const updateTask = async (taskId, formData) => {
+  try {
+    const res = await api.put(`/task/${taskId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error updating task:", error);
+    throw error;
+  }
+};
+
 export const addTask = async (task) => {
   const res = await api.post("/addtask2", task, {
     headers: {

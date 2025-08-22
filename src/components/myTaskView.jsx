@@ -1,5 +1,5 @@
 // MyTaskView.jsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import moment from "moment";
 import TaskCard from "./taskcard";
 
@@ -10,8 +10,17 @@ export default function MyTaskView({
   setpage,
   deleteTask,
   onaddclick,
+  oneditclick,
 }) {
   const [selectedTask, setSelectedTask] = useState(tasks[0]);
+
+  useEffect(() => {
+    const load = () => {
+      const updatedtask = tasks.find((t) => t.id === selectedTask.id);
+      setSelectedTask(updatedtask);
+    };
+    load();
+  }, [tasks]);
 
   const deletetaskhandler = () => {
     deleteTask(selectedTask.id);
@@ -23,6 +32,9 @@ export default function MyTaskView({
     //       } else {
     //         setSelectedTaskId(null); // No tasks left
     //       }
+  };
+  const editTaskhandler = () => {
+    oneditclick(selectedTask);
   };
 
   return (
@@ -118,7 +130,12 @@ export default function MyTaskView({
             </p>
 
             <div className="flex gap-3 mt-4">
-              <button className="p-2 bg-blue-500">Edit</button>
+              <button
+                onClick={() => editTaskhandler()}
+                className="p-2 bg-blue-500"
+              >
+                Edit
+              </button>
               <button
                 onClick={() => deletetaskhandler()}
                 className="p-2 bg-red-500 text-black rounded"
