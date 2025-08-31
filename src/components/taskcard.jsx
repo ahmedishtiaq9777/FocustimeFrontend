@@ -42,7 +42,7 @@ export default function TaskCard({ task, selectedTask, setSelectedTask }) {
       <img
         src={task.image_url}
         alt="task"
-        className="w-16 h-16 rounded object-cover"
+        className="w-16 h-16 rounded object-contain"
       />
     </div>
   );

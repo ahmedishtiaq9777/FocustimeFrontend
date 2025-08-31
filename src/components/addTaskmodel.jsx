@@ -22,7 +22,6 @@ export default function AddTaskModal({ onClose, onSubmit, taskToEdit = null }) {
 
   const handleSubmit = () => {
     const taskData = {
-      id: taskToEdit.id,
       title,
       scheduledFor,
       priority,
@@ -30,7 +29,9 @@ export default function AddTaskModal({ onClose, onSubmit, taskToEdit = null }) {
       image,
       status,
     };
-
+    if (taskToEdit != null) {
+      taskData.id = taskToEdit.id;
+    }
     onSubmit(taskData);
     onClose();
   };

@@ -4,7 +4,9 @@ import Signup from "./pages/signup";
 import Dashboard from "./pages/dashboard2";
 import { AuthProvider } from "./auth/AuthContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
+import { SocketProvider } from "./socket/socketContext";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
@@ -17,7 +19,10 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <SocketProvider>
+                  <Dashboard />
+                  <Toaster />
+                </SocketProvider>
               </ProtectedRoute>
             }
           />

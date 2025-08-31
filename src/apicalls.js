@@ -5,6 +5,18 @@ export const getTasks = async () => {
   const res = await api.get("/tasks");
   return res.data;
 };
+export const updateNofication = async (notificationId) => {
+  const res = await api.patch(`/notifications/${notificationId}/read`);
+  return res.data;
+};
+export const fetchNotifications = async () => {
+  const res = await api.get(`/notifications`);
+  return res.data;
+};
+export async function getDashboardData() {
+  const response = await api.get("/getDashboardData");
+  return response.data;
+}
 export const deleteTaskapi = async (taskId) => {
   const res = await api.delete(`/tasks/${taskId}`);
   return res.data;

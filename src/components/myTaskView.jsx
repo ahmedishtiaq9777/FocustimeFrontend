@@ -25,13 +25,6 @@ export default function MyTaskView({
   const deletetaskhandler = () => {
     deleteTask(selectedTask.id);
     setSelectedTask(tasks[0]);
-
-    // if (tasks.length > 0) {
-    //         const nextIndex = index < newTasks.length ? index : index - 1;
-    //         setSelectedTaskId(newTasks[nextIndex].id);
-    //       } else {
-    //         setSelectedTaskId(null); // No tasks left
-    //       }
   };
   const editTaskhandler = () => {
     oneditclick(selectedTask);
@@ -83,7 +76,7 @@ export default function MyTaskView({
               <img
                 src={selectedTask.image_url}
                 alt="task"
-                className="w-40 h-40 rounded"
+                className="w-100 h-100 rounded"
               />
               <div>
                 <h3 className="font-bold mb-1">{selectedTask.title}</h3>

@@ -13,10 +13,14 @@ import {
   fetchTasks,
   tasksWithsearch,
   updateTask,
+  fetchNotifications,
 } from "../apicalls";
-import DashboardView from "../components/myDashboardView";
+// import DashboardView from "../components/myDashboardView";
+import DashboardView from "../components/myDashboardView2";
 import TaskModal from "../components/addTaskmodel";
+import toast from "react-hot-toast";
 
+import { useSocket } from "../socket/socketContext";
 export default function Dashboard() {
   const [activeView, setActiveView] = useState("Dashboard");
   const { logout, user, token } = useAuth();
@@ -27,6 +31,9 @@ export default function Dashboard() {
 
   const [taskModalVisible, setModalVisible] = useState(false); // ⭐ renamed
   const [taskToEdit, setTaskToEdit] = useState(null); // ⭐ new: store task being edited
+  const [notifications, setNotifications] = useState([]);
+
+  const socket = useSocket();
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -34,6 +41,39 @@ export default function Dashboard() {
     };
     loadTasks();
   }, [cpage]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("hello", (data) => {
+      console.log("📩 Reminder received:", data);
+      toast(`🔔 Reminder: ${data.message} is tomorrow!`);
+    });
+
+    socket.on("reminder", (data) => {
+      console.log("📩 Reminder received:", data);
+      setNotifications((prev) => [data.notification, ...prev]);
+      toast(`🔔 Reminder: ${data.notification.message} `);
+    });
+
+    return () => socket.off("reminder");
+  }, [socket]);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const res = await fetchNotifications();
+        console.log("notifications from db:", res);
+        setNotifications(res); // store in state
+      } catch (error) {
+        console.error("Failed to load notifications:", error);
+      }
+    };
+
+    if (user) {
+      loadNotifications();
+    }
+  }, []);
 
   const gettaskbypage = async () => {
     try {
@@ -177,20 +217,18 @@ export default function Dashboard() {
         );
 
       default:
-        return (
-          <DashboardView
-            tasks={tasks}
-            pagArr={pagArr}
-            nPages={nPages}
-            setpage={Setpage_}
-          />
-        );
+        return <DashboardView />;
     }
   };
 
   return (
     <div className="flex flex-col h-screen">
-      <Navbar user={user} onsearch={searchPress} />
+      <Navbar
+        user={user}
+        onsearch={searchPress}
+        notifications={notifications}
+        setNotifications={setNotifications}
+      />
 
       <div className="flex flex-1 mt-16  ">
         <Sidebar
