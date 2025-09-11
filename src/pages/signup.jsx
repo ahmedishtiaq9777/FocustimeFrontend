@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
+import api from "../axiospublic";
 
 const signup = () => {
   const [name, setName] = useState("");
@@ -13,14 +14,11 @@ const signup = () => {
     setError("");
 
     try {
-      const response = await axios.post(
-        "http://localhost:8090/public/register",
-        {
-          name,
-          email,
-          password,
-        }
-      );
+      const response = await api.post("/adduser", {
+        name,
+        email,
+        password,
+      });
 
       if (response.status === 201 || response.status === 200) {
         // Registration successful

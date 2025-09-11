@@ -21,6 +21,7 @@ import TaskModal from "../components/addTaskmodel";
 import toast from "react-hot-toast";
 
 import { useSocket } from "../socket/socketContext";
+import { STATUSCODE_200 } from "../publicvariables";
 export default function Dashboard() {
   const [activeView, setActiveView] = useState("Dashboard");
   const { logout, user, token } = useAuth();
@@ -29,8 +30,8 @@ export default function Dashboard() {
   const [pagArr, setpageArr] = useState([]);
   const [tasks, setTasks] = useState([]);
 
-  const [taskModalVisible, setModalVisible] = useState(false); // ⭐ renamed
-  const [taskToEdit, setTaskToEdit] = useState(null); // ⭐ new: store task being edited
+  const [taskModalVisible, setModalVisible] = useState(false); //
+  const [taskToEdit, setTaskToEdit] = useState(null); //
   const [notifications, setNotifications] = useState([]);
 
   const socket = useSocket();
@@ -179,10 +180,18 @@ export default function Dashboard() {
   };
 
   const openEditTaskModal = (task) => {
-    console.log("task:", task);
+    // console.log("task:", task);
     // ⭐ new
     setTaskToEdit(task);
     setModalVisible(true);
+  };
+  const logoutcall = async () => {
+    try {
+      const response = await logoutUser();
+      if (response.status == STATUSCODE_200) logout();
+    } catch (error) {
+      console.log("error", error);
+    }
   };
 
   const closeModal = () => {
@@ -211,10 +220,14 @@ export default function Dashboard() {
             pagArr={pagArr}
             nPages={nPages}
             setpage={Setpage_}
-            onaddclick={openAddTaskModal} // ⭐ changed
-            oneditclick={openEditTaskModal} // ⭐ new
+            onaddclick={openAddTaskModal}
+            oneditclick={openEditTaskModal}
           />
         );
+      case "Settings":
+        return <div></div>;
+      case "Help":
+        return <div></div>;
 
       default:
         return <DashboardView />;
@@ -235,7 +248,7 @@ export default function Dashboard() {
           user={user}
           activeView={activeView}
           setActiveView={setActiveView}
-          logout={logout}
+          logout={logoutcall}
         />
         {taskModalVisible && (
           <TaskModal

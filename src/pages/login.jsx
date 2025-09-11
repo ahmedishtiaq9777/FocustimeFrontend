@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { baseUrl, publicUrl } from "../publicvariables";
+import api from "../axiospublic";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +31,7 @@ const Login = () => {
 
   const loginCall = async () => {
     try {
-      const response = await axios.post(`${publicUrl}/login`, {
+      const response = await api.post("/login", {
         email,
         password,
       });
@@ -40,7 +41,7 @@ const Login = () => {
         console.log("response:", response);
 
         await login(response.data);
-        navigate("/dashboard");
+        // navigate("/dashboard");
       }
     } catch (err) {
       if (err.status == 401) {

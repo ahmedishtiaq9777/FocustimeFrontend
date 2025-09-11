@@ -16,8 +16,9 @@ export default function MyTaskView({
 
   useEffect(() => {
     const load = () => {
-      const updatedtask = tasks.find((t) => t.id === selectedTask.id);
-      setSelectedTask(updatedtask);
+      console.log("selected task:", selectedTask);
+      console.log("tasks:", tasks[0]);
+      setSelectedTask(tasks[0]);
     };
     load();
   }, [tasks]);
