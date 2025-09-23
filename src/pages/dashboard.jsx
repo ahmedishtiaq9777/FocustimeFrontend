@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react";
+import Sidebar from "../components/sidebar";
+import MyTaskView from "../components/myTaskView";
+import { useEffect, useState } from "react";
 
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { List, FileText, Plus } from "lucide-react";
-import { MdEdit, MdDelete } from "react-icons/md";
+import Navbar from "../components/navbar";
 import {
   getTasks,
   addTask,
@@ -13,31 +11,107 @@ import {
   deleteTaskapi,
   fetchTasks,
   tasksWithsearch,
+  updateTask,
+  fetchNotifications,
 } from "../apicalls";
+// import DashboardView from "../components/myDashboardView";
+import DashboardView from "../components/myDashboardView2";
+import TaskModal from "../components/addTaskmodel";
+import toast from "react-hot-toast";
 
-const Dashboard = () => {
-  const [newtask, settask] = useState("");
-
-  const [scheduledFor, setScheduledFor] = useState(null);
-  const [tasks, setTasks] = useState([]);
-  const [count, setcount] = useState(0);
+import { useSocket } from "../socket/socketContext";
+import { STATUSCODE_200 } from "../publicvariables";
+export default function Dashboard() {
+  const [activeView, setActiveView] = useState("Dashboard");
+  const { logout, user, token } = useAuth();
   const [cpage, setpage] = useState(1);
   const [nPages, settotalPages] = useState(1);
   const [pagArr, setpageArr] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
-  const [search, setSearch] = useState("");
+  const [taskModalVisible, setModalVisible] = useState(false); //
+  const [taskToEdit, setTaskToEdit] = useState(null); //
+  const [notifications, setNotifications] = useState([]);
 
-  const { logout, user, token } = useAuth();
-  const navigate = useNavigate();
+  const socket = useSocket();
+
+  console.log("user:", user);
+  console.log("token", token);
 
   useEffect(() => {
-    console.log("useEffect dashboard");
-
     const loadTasks = async () => {
       await gettaskbypage();
     };
     loadTasks();
   }, [cpage]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("hello", (data) => {
+      console.log("📩 Reminder received:", data);
+      toast(`🔔 Reminder: ${data.message} is tomorrow!`);
+    });
+
+    socket.on("reminder", (data) => {
+      console.log("📩 Reminder received:", data);
+      setNotifications((prev) => [data.notification, ...prev]);
+      toast(`🔔 Reminder: ${data.notification.message} `);
+    });
+
+    return () => socket.off("reminder");
+  }, [socket]);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const res = await fetchNotifications();
+        console.log("notifications from db:", res);
+        setNotifications(res); // store in state
+      } catch (error) {
+        console.error("Failed to load notifications:", error);
+      }
+    };
+
+    if (user) {
+      loadNotifications();
+    }
+  }, []);
+
+  const gettaskbypage = async () => {
+    try {
+      const { tasks, totalTasks, currentPage, totalPages } = await fetchTasks(
+        cpage,
+        7
+      );
+
+      const arr = Array.from({ length: totalPages }, (_, i) => i + 1);
+      setpageArr(arr);
+
+      settotalPages(totalPages);
+      setTasks(tasks);
+      // setpage(currentPage);
+    } catch (error) {
+      if (error.response) {
+        if (error.response.status === 403) {
+          console.log("You are not authorized to view tasks.");
+          alert("Session expired. Please log in again.");
+          logout();
+        } else {
+          alert(
+            `Error ${error.response.status}: ${
+              error.response.data.error || "Something went wrong."
+            }`
+          );
+        }
+      } else if (error.request) {
+        alert("No response from server.");
+      } else {
+        console.log(error);
+        alert("An unexpected error occurred.");
+      }
+    }
+  };
 
   const deleteTask = async (taskId) => {
     try {
@@ -73,259 +147,121 @@ const Dashboard = () => {
       }
     }
   };
-  const addtaskHandler = async (e) => {
-    e.preventDefault();
-    if (!newtask.trim()) return;
-
-    console.log(typeof scheduledFor);
+  const addTaskSubmit = async (data) => {
     try {
-      const Taskobj = {
-        title: newtask.trim(),
-        scheduled_for: scheduledFor,
-      };
+      const formData = new FormData();
+      formData.append("title", data?.title);
+      formData.append("scheduled_for", data.scheduledFor);
+      formData.append("priority", data.priority);
+      formData.append("description", data.description);
+      if (data.image) formData.append("image", data.image); // backend handles upload
+      formData.append("status", data.status);
 
-      const response = await addTask(Taskobj);
-      setTasks((prev) => [...prev, Taskobj]);
-      settask("");
-      console.log("response:", response);
-    } catch (error) {
-      if (error.response) {
-        if (error.response.status === 403) {
-          console.log("error adding  task ..session expired.");
-          alert("Session expired. Please log in again.");
-          logout();
-          // navigate("/login");
-        } else {
-          alert(
-            `Error ${error.response.status}: ${
-              error.response.data.error || "Something went wrong."
-            }`
-          );
-        }
-      }
-
-      console.error("Error adding task:", error);
-    }
-  };
-
-  const gettaskbypage = async () => {
-    try {
-      const { tasks, totalTasks, currentPage, totalPages } = await fetchTasks(
-        cpage,
-        7
-      );
-
-      const arr = Array.from({ length: totalPages }, (_, i) => i + 1);
-      setpageArr(arr);
-
-      console.log("tasks:length", tasks.length);
-      console.log("total pages:", totalPages);
-      settotalPages(totalPages);
-      setTasks(tasks);
-      // setpage(currentPage);
-      console.log("tasks:", tasks);
-      console.log("totalTasks:", totalTasks);
-      console.log("currentpage:", currentPage);
-      console.log("totalPages", totalPages);
-    } catch (error) {
-      if (error.response) {
-        if (error.response.status === 403) {
-          console.log("You are not authorized to view tasks.");
-          alert("Session expired. Please log in again.");
-          logout();
-        } else {
-          alert(
-            `Error ${error.response.status}: ${
-              error.response.data.error || "Something went wrong."
-            }`
-          );
-        }
-      } else if (error.request) {
-        alert("No response from server.");
+      if (taskToEdit) {
+        // ⭐ editing mode
+        await updateTask(data.id, formData); // assumes updateTask API exists
+        alert("Task updated successfully!");
       } else {
-        console.log(error);
-        alert("An unexpected error occurred.");
+        await addTask(formData);
+        alert("Task created successfully!");
       }
+
+      await gettaskbypage(); // refresh list
+      setModalVisible(false);
+      setTaskToEdit(null); // reset
+    } catch (err) {
+      console.error(err);
+
+      alert(taskToEdit ? "Error updating task" : "Error creating task");
     }
   };
-  const searchPress = async () => {
+
+  const openAddTaskModal = () => {
+    setTaskToEdit(null); // ⭐ reset
+    setModalVisible(true);
+  };
+
+  const openEditTaskModal = (task) => {
+    // console.log("task:", task);
+    // ⭐ new
+    setTaskToEdit(task);
+    setModalVisible(true);
+  };
+  const logoutcall = async () => {
+    try {
+      const response = await logoutUser();
+      if (response.status == STATUSCODE_200) logout();
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  const closeModal = () => {
+    // ⭐ renamed
+    setModalVisible(false);
+    setTaskToEdit(null);
+  };
+
+  const changemodelVisible = () => {
+    setModalVisible((t) => !t);
+  };
+  const searchPress = async (search) => {
     let temptask = await tasksWithsearch(search);
     setTasks(temptask);
   };
+  const Setpage_ = (page) => {
+    setpage(page);
+  };
+  const renderView = () => {
+    switch (activeView) {
+      case "My Task":
+        return (
+          <MyTaskView
+            deleteTask={deleteTask}
+            tasks={tasks}
+            pagArr={pagArr}
+            nPages={nPages}
+            setpage={Setpage_}
+            onaddclick={openAddTaskModal}
+            oneditclick={openEditTaskModal}
+          />
+        );
+      case "Settings":
+        return <div></div>;
+      case "Help":
+        return <div></div>;
 
-  const logout_ = async () => {
-    try {
-      await logoutUser();
-      logout();
-      navigate("/login");
-    } catch (err) {
-      console.error("Error during logout:", err);
+      default:
+        return <DashboardView />;
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0f172a] text-white p-6 font-mono">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-cyan-400">Focus Time</h1>
-        <p className="text-gray-400 mt-2">
-          Your beautiful workspace for tasks and notes
-        </p>
-      </div>
+    <div className="flex flex-col h-screen">
+      <Navbar
+        user={user}
+        onsearch={searchPress}
+        notifications={notifications}
+        setNotifications={setNotifications}
+      />
 
-      <div className="mt-8">
-        {/* Tabs */}
-        <div className="flex border-b  border-gray-700">
-          <button className="text-cyan-400 px-4 py-2 border-b-2 border-cyan-400 flex items-center gap-2">
-            <List className="w-4 h-4" />
-            Todo List
-          </button>
-          <button className="text-gray-400 px-4 py-2 flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            Notepad
-          </button>
-          <button
-            onClick={logout_}
-            className="bg-red-500 ml-auto text-black font-bold px-4 py-2  rounded-md hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </div>
-
-        {/* Todo Card */}
-        <div className="bg-[#1e293b] mt-6 rounded-lg p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="text-cyan-400">
-              <List className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-xl">Todo List</h2>
-              <p className="text-gray-400 text-sm">
-                {tasks?.filter((t) => t.completed).length} of {tasks?.length}
-                completed
-              </p>
-            </div>
-          </div>
-
-          {/* Add Task */}
-          <div className="flex gap-2 mb-4">
-            <input
-              value={newtask}
-              onChange={(e) => settask(e.target.value)}
-              placeholder="Add a new task..."
-              className="bg-[#0f172a] border border-gray-600 rounded px-4 py-2 text-white w-full"
-            />
-            <button
-              onClick={addtaskHandler}
-              className="bg-cyan-400 text-[#0f172a] px-4 py-2 rounded flex items-center gap-1"
-            >
-              <Plus className="w-4 h-4" /> Add
-            </button>
-          </div>
-
-          {/* Filters */}
-          <div className="flex gap-2 mb-4">
-            <input
-              placeholder="Search todos..."
-              onChange={(e) => setSearch(e.target.value)}
-              className="bg-[#0f172a] border border-gray-600 rounded px-4 py-2 text-white w-full"
-            />
-            <button
-              onClick={searchPress}
-              className="bg-[#0f172a] text-black border border-gray-600 rounded px-3 py-2"
-            >
-              Search
-            </button>
-            <select
-              onChange={(e) => {
-                setpage(e.target.value);
-              }}
-              className="bg-[#0f172a] text-white border border-gray-600 rounded px-3 py-2"
-            >
-              {pagArr?.map((pagnum, index) => (
-                <option value={pagnum} key={index}>
-                  {pagnum} of {nPages}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Todo Items */}
-          <div className="space-y-2">
-            {tasks?.map((t, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between gap-3 bg-[#0f172a] p-3 rounded border border-gray-700"
-              >
-                <div className="flex items-center gap-3">
-                  <span>{t.title}</span>
-                </div>
-
-                <div className="flex gap-2">
-                  <button className="text-blue-400 hover:text-blue-600">
-                    <MdEdit size={18} />
-                  </button>
-                  <button
-                    onClick={() => deleteTask(t.id)}
-                    className="text-red-400 hover:text-red-600"
-                  >
-                    <MdDelete size={18} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="flex flex-1 mt-16  ">
+        <Sidebar
+          user={user}
+          activeView={activeView}
+          setActiveView={setActiveView}
+          logout={logoutcall}
+        />
+        {taskModalVisible && (
+          <TaskModal
+            onSubmit={addTaskSubmit}
+            onClose={changemodelVisible}
+            taskToEdit={taskToEdit}
+          />
+        )}
+        <div className="flex-1 ml-64">{renderView()}</div>
+        {/*right side view*/}
       </div>
     </div>
   );
-
-  //   return (
-  //     <div className="w-screen h-screen">
-  //       <div className="max-w-xl mx-auto mt-12 p-6 bg-white rounded-xl shadow-md space-y-6">
-  //         {/* Header Input + Buttons */}
-  //         <div className="flex gap-3">
-  //           <label>
-  //             Task Title:
-  //             <input
-  //               type="text"
-  //               placeholder="Enter a new task"
-  //               onChange={(e) => settask(e.target.value)}
-  //               className="flex-1 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
-  //             />
-  //           </label>
-  //           <label>
-  //             Scheduled For:
-  //             <DatePicker
-  //               selected={scheduledFor}
-  //               onChange={(date) => setScheduledFor(date)}
-  //               showTimeSelect
-  //               dateFormat="Pp"
-  //             />
-  //           </label>
-  //           <button
-  //             onClick={addtaskHandler}
-  //             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-  //           >
-  //             Add
-  //           </button>
-  //           <button
-  //             onClick={logout_}
-  //             className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
-  //           >
-  //             Logout
-  //           </button>
-  //         </div>
-
-  //         {/* Task List */}
-  //         <div>
-  //           <h2 className="text-xl font-semibold mb-2">Your Tasks</h2>
-  //           <ul className="list-disc list-inside space-y-1 text-gray-800">
-  //             <TaskList tasks={tasks} />
-  //           </ul>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-};
-
-export default Dashboard;
+}

@@ -5,12 +5,17 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, settoken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      settoken(token); // In real apps, validate or decode token
+    const storedToken = localStorage.getItem("authToken");
+    const storedUser = localStorage.getItem("user");
+
+    if (storedToken && storedUser) {
+      settoken(storedToken);
+      setUser(JSON.parse(storedUser));
     }
+    setLoading(false);
   }, []);
 
   const login = async (data) => {
@@ -30,7 +35,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -12,12 +12,12 @@ const Login = () => {
   const { login, token } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.log("useEffect login", token);
-    if (token) {
-      navigate("/dashboard");
-    }
-  }, [token]);
+  // useEffect(() => {
+  //   console.log("useEffect login", token);
+  //   if (token) {
+  //     navigate("/dashboard");
+  //   }
+  // }, [token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,15 +38,16 @@ const Login = () => {
 
       if (response.status == 200) {
         seterror("");
-        console.log("response:", response);
 
         await login(response.data);
+        navigate("/");
         // navigate("/dashboard");
       }
     } catch (err) {
+      console.log("error:", err);
       if (err.status == 401) {
         console.log("status:", err.response.status);
-        const message = err?.response?.data?.message;
+        const message = err?.response?.data?.error;
         seterror(message);
       }
     }
