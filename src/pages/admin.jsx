@@ -3,12 +3,12 @@ import { useAuth } from "../auth/AuthContext";
 import api from "../axios";
 import { useNavigate } from "react-router-dom";
 import { STATUSCODE_403 } from "../publicvariables";
+import ErrorLogModal from "../components/ErrorLogModal";
 export const Admin = () => {
   const { token, logout } = useAuth();
   const [logs, setLogs] = useState([]);
   const [filecontent, setfileContent] = useState("");
   const [isOpen, setisOpen] = useState(false);
-  const [errormessage, setmessege] = useState("");
 
   const navigate = useNavigate();
 
@@ -34,12 +34,9 @@ export const Admin = () => {
     try {
       const key = file.key;
       const res = await api.get("/admin/logs/file", { params: { key } });
-      setfileContent(res.data.content);
-      setisOpen(true);
       const content = JSON.parse(res.data.content);
-      //    console.log(content.message);
-      setmessege(content.message);
-      console.log("response:", res.data.content.message);
+      setfileContent(content);
+      setisOpen(true);
     } catch (error) {
       console.log("error in /admin/logs/file:", error);
     }
@@ -89,21 +86,7 @@ export const Admin = () => {
 
       {/* Modal */}
       {isOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white w-3/4 max-w-3xl rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-semibold mb-4">Log Content</h3>
-
-            <pre className="bg-gray-100 p-4 rounded-md max-h-96 overflow-y-auto text-sm">
-              <p>{errormessage}</p> {filecontent}
-            </pre>
-            <button
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              onClick={() => setisOpen(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <ErrorLogModal filecontent={filecontent} setisOpen={setisOpen} />
       )}
     </div>
   );
