@@ -56,3 +56,6 @@ A full-stack Task Management system with authentication, task scheduling, notifi
 
 <img width="1884" height="906" alt="mytasks2" src="https://github.com/user-attachments/assets/d48ab017-5e81-4671-88fe-20a9109be659" />
 <img width="821" height="757" alt="addedittask" src="https://github.com/user-attachments/assets/4242202e-5318-449e-9e1b-4e04114e10a9" />
+<img width="1869" height="861" alt="adminerrorlogs" src="https://github.com/user-attachments/assets/64151870-d9e6-4f2c-8bba-8457dc538647" />
+<img width="1318" height="709" alt="adminerrorlogdetail" src="https://github.com/user-attachments/assets/17b4cae2-083e-4dba-961e-1ae8ed26b72c" />
+
